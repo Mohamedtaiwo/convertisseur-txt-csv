@@ -2,6 +2,8 @@
 
 Un petit outil web, gratuit et simple, pour transformer un fichier texte (`.txt`) en fichier `.csv` qui s'ouvre directement dans Excel.
 
+**Utiliser l'outil : [convertisseur-txt-csv.vercel.app](https://convertisseur-txt-csv.vercel.app)**
+
 > **Votre fichier reste sur votre ordinateur. Rien n'est envoyé ni conservé.**
 
 ## À quoi sert cet outil ?
@@ -12,7 +14,7 @@ Cet outil le transforme en fichier `.csv` qu'Excel ouvre proprement : une colonn
 
 ## Comment l'utiliser
 
-1. Ouvrez la page de l'outil dans votre navigateur (Edge, Chrome, Firefox ou Safari, sur ordinateur, tablette ou téléphone).
+1. Ouvrez [la page de l'outil](https://convertisseur-txt-csv.vercel.app) dans votre navigateur (Edge, Chrome, Firefox ou Safari, sur ordinateur, tablette ou téléphone).
 2. Cliquez sur **Choisir mon fichier .txt** et choisissez votre fichier. Vous pouvez aussi le faire glisser sur la page.
 3. **Vérifiez le tableau** : les 10 premières lignes s'affichent, rangées en colonnes A, B, C… comme dans Excel.
 4. Cliquez sur **Télécharger le fichier CSV**. Le fichier garde le nom de l'original : `releve.txt` devient `releve.csv`.
