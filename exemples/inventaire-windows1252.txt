@@ -1,0 +1,8 @@
+Article	Quantité	Prix unitaire	Rayon
+Crème fraîche	2	1,85 €	Crèmerie
+Pâtes complètes	3	1,20 €	Épicerie
+Bœuf haché	1	6,90 €	Boucherie
+Pêches	6	0,45 €	Fruits et légumes
+
+Œufs de poules élevées en plein air	12	0,32 €	Crèmerie
+Café moulu « pur arabica »	2	3,99 €	Épicerie

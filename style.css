@@ -1,0 +1,561 @@
+/*
+ * style.css — Convertisseur TXT vers CSV
+ * Gros texte, gros boutons, fort contraste. Aucune ressource externe :
+ * les polices sont celles déjà installées sur l'appareil.
+ */
+
+:root {
+  color-scheme: light;
+  --texte: #1a1a1a;
+  --texte-secondaire: #3f3f3f;
+  --fond: #ffffff;
+  --fond-doux: #f3f4f6;
+  --bordure: #5c5c5c;
+  --bordure-legere: #9a9a9a;
+  --principal: #0a4a8f;
+  --principal-fonce: #06325f;
+  --principal-pale: #e6eef8;
+  --succes: #1b6631;
+  --succes-pale: #e8f4eb;
+  --erreur: #a3241a;
+  --erreur-pale: #fcecea;
+  --attention: #7a4a00;
+  --attention-pale: #fdf3e1;
+  --focus: #1a1a1a;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  font-size: 125%; /* 20 px : texte bien lisible */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+}
+
+h1 {
+  font-size: 2.1rem;
+  line-height: 1.2;
+  margin: 0 0 0.75rem;
+}
+
+h2 {
+  font-size: 1.45rem;
+  line-height: 1.25;
+  margin: 0 0 0.75rem;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+strong {
+  font-weight: 700;
+}
+
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.intro {
+  font-size: 1.1rem;
+}
+
+/* Lignes de texte pas trop longues (75 caractères environ) : plus faciles à suivre. */
+.intro {
+  max-width: 32em;
+}
+
+.message-succes p {
+  max-width: 34em;
+}
+
+/* Un nom de fichier très long (sans espaces) passe à la ligne au lieu de
+   déborder de l'écran. */
+.resume,
+.message,
+.avertissements li {
+  overflow-wrap: break-word;
+}
+
+/* ---- Message de confidentialité ---- */
+
+.confidentialite {
+  margin: 1.25rem 0 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid var(--succes);
+  border-left-width: 0.6rem;
+  border-radius: 0.6rem;
+  background: var(--succes-pale);
+}
+
+.confidentialite strong {
+  display: block;
+  font-size: 1.1rem;
+}
+
+.confidentialite span {
+  display: block;
+  margin-top: 0.25rem;
+}
+
+/* ---- Étapes ---- */
+
+.etape {
+  margin-top: 2rem;
+}
+
+.resume {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.aide {
+  color: var(--texte-secondaire);
+  font-size: 0.95rem;
+}
+
+/* ---- Zone de dépôt ---- */
+
+.zone-depot {
+  padding: 2rem 1rem;
+  border: 3px dashed var(--bordure);
+  border-radius: 1rem;
+  background: var(--fond-doux);
+  text-align: center;
+  cursor: pointer;
+}
+
+.aide-depot,
+.chargement {
+  margin: 1rem 0 0;
+  color: var(--texte-secondaire);
+}
+
+body.glisser {
+  background: var(--principal-pale);
+}
+
+body.glisser .zone-depot {
+  border-style: solid;
+  border-color: var(--principal);
+  background: #ffffff;
+}
+
+/* ---- Boutons ---- */
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.2rem;
+  padding: 0.7rem 1.5rem;
+  border: 3px solid var(--principal);
+  border-radius: 0.6rem;
+  font: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  cursor: pointer;
+}
+
+.bouton-grand {
+  min-height: 4rem;
+  padding: 0.9rem 2rem;
+  font-size: 1.3rem;
+}
+
+.bouton-principal {
+  background: var(--principal);
+  color: #ffffff;
+}
+
+.bouton-principal:hover {
+  background: var(--principal-fonce);
+  border-color: var(--principal-fonce);
+}
+
+.bouton-secondaire {
+  background: #ffffff;
+  color: var(--principal);
+}
+
+.bouton-secondaire:hover {
+  background: var(--principal-pale);
+}
+
+.bouton:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.bouton:disabled {
+  border-color: #4f5d6e;
+  background: #4f5d6e;
+  color: #ffffff;
+  cursor: progress;
+}
+
+/* JavaScript désactivé : le message « Activez JavaScript » suffit ; rien ne
+   doit faire croire que l'outil charge ou qu'on peut y déposer un fichier.
+   (Placé après .bouton:disabled pour l'emporter sur son curseur.) */
+@media (scripting: none) {
+  .chargement,
+  .aide-depot {
+    display: none;
+  }
+
+  .zone-depot,
+  .bouton:disabled {
+    cursor: default;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+/* ---- Choix du séparateur ---- */
+
+.reglage {
+  margin: 1.5rem 0 1.25rem;
+}
+
+.etiquette {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+select {
+  width: 100%;
+  min-height: 3.2rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--bordure);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  color: var(--texte);
+  font: inherit;
+  font-size: 1.1rem;
+}
+
+select:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.reglage .aide {
+  margin: 0.4rem 0 0;
+}
+
+/* ---- Tableau d'aperçu ---- */
+
+.tableau-cadre {
+  overflow-x: auto;
+  border: 2px solid var(--bordure);
+  border-radius: 0.5rem;
+  background: #ffffff;
+}
+
+.tableau-cadre:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+table {
+  min-width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+caption {
+  padding: 0.6rem 0.75rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--bordure-legere);
+  text-align: left;
+  vertical-align: top;
+}
+
+/* Valeurs courtes : sur une seule ligne (un mot n'est jamais coupé). */
+td {
+  min-width: 4rem;
+  white-space: pre;
+}
+
+/* Valeurs longues : retour à la ligne entre les mots. */
+td.long {
+  min-width: 10rem;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+thead th,
+tbody th,
+.coin {
+  background: #e8eaed;
+  color: var(--texte);
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+tbody th {
+  min-width: 2rem;
+}
+
+.suite {
+  margin-top: 0.75rem;
+}
+
+.aide-defilement {
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+}
+
+/* ---- Messages ---- */
+
+.message {
+  margin: 1.5rem 0 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid;
+  border-left-width: 0.6rem;
+  border-radius: 0.6rem;
+}
+
+.message p:last-child {
+  margin-bottom: 0;
+}
+
+.message-erreur {
+  border-color: var(--erreur);
+  background: var(--erreur-pale);
+  font-weight: 700;
+}
+
+.message-succes {
+  border-color: var(--succes);
+  background: var(--succes-pale);
+}
+
+.message-succes .bouton {
+  margin-top: 0.5rem;
+}
+
+.avertissements {
+  margin: 1rem 0 0;
+  padding: 0.9rem 1.25rem 0.9rem 2.25rem;
+  border: 2px solid var(--attention);
+  border-radius: 0.6rem;
+  background: var(--attention-pale);
+}
+
+.avertissements li + li {
+  margin-top: 0.4rem;
+}
+
+/* ---- Format de sortie ---- */
+
+.choix-format {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  border: 0;
+}
+
+.choix-format legend {
+  margin-bottom: 0.6rem;
+  padding: 0;
+  font-weight: 700;
+}
+
+.option {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 2px solid var(--bordure);
+  border-radius: 0.6rem;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.option:has(input:checked) {
+  border-color: var(--principal);
+  box-shadow: 0 0 0 2px var(--principal);
+  background: var(--principal-pale);
+}
+
+.option input {
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin: 0.15rem 0 0;
+  accent-color: var(--principal);
+}
+
+.option input:focus-visible {
+  outline: 4px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.option-titre {
+  display: block;
+  font-weight: 700;
+}
+
+.option-detail {
+  display: block;
+  color: var(--texte-secondaire);
+  font-size: 0.95rem;
+}
+
+/* ---- Détails techniques ---- */
+
+.details {
+  margin-top: 1.25rem;
+  color: var(--texte-secondaire);
+  font-size: 0.95rem;
+}
+
+.details summary {
+  padding: 0.4rem 0;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.details dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+}
+
+.details dt {
+  font-weight: 700;
+}
+
+.details dd {
+  margin: 0;
+}
+
+/* ---- Pied de page ---- */
+
+.pied {
+  border-top: 1px solid var(--bordure-legere);
+  color: var(--texte-secondaire);
+  font-size: 0.9rem;
+}
+
+.pied p {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* ---- Accessibilité ---- */
+
+/* Masqué à l'écran, mais lu par les lecteurs d'écran. */
+.cache-visuel {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---- Téléphones et petits écrans ---- */
+
+@media (max-width: 40rem) {
+  html {
+    font-size: 112.5%; /* 18 px */
+  }
+
+  h1 {
+    font-size: 1.75rem;
+  }
+
+  .bouton {
+    width: 100%;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .zone-depot {
+    padding: 1.25rem 1rem;
+  }
+}
+
+/* Sur un écran tactile, on ne fait pas glisser de fichier. */
+@media (hover: none) and (pointer: coarse) {
+  .aide-depot {
+    display: none;
+  }
+
+  .zone-depot {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+}
+
+/* Mode « contraste élevé » de Windows. */
+@media (forced-colors: active) {
+  .bouton,
+  .option,
+  .zone-depot,
+  .tableau-cadre,
+  .message,
+  .avertissements,
+  .confidentialite {
+    border-color: CanvasText;
+  }
+
+  .option:has(input:checked) {
+    outline: 3px solid Highlight;
+  }
+
+  .bouton:focus-visible,
+  select:focus-visible,
+  .tableau-cadre:focus-visible {
+    outline-color: Highlight;
+  }
+}

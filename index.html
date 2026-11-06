@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Convertir un fichier .txt en fichier .csv pour Excel</title>
+  <meta name="description" content="Transformez un fichier texte (.txt) en fichier .csv à ouvrir dans Excel. Gratuit et simple : votre fichier reste sur votre ordinateur.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="js/conversion.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <main class="page">
+    <h1>Transformer un fichier texte en fichier Excel</h1>
+    <p class="intro">Choisissez un fichier <strong>.txt</strong>&nbsp;: vous récupérez un fichier <strong>.csv</strong> qui s'ouvre dans Excel, avec une colonne par information.</p>
+
+    <p class="confidentialite">
+      <strong>Votre fichier reste sur votre ordinateur. Rien n'est envoyé ni conservé.</strong>
+      <span>La transformation se fait ici même, dans votre navigateur.</span>
+    </p>
+
+    <noscript>
+      <p class="message message-erreur">Cet outil a besoin de JavaScript pour fonctionner. Activez JavaScript dans votre navigateur, puis rechargez la page.</p>
+    </noscript>
+
+    <div id="message-erreur" class="message message-erreur" role="alert" tabindex="-1" hidden>
+      <p id="texte-erreur"></p>
+    </div>
+
+    <section id="etape-choix" class="etape" aria-labelledby="titre-choix">
+      <h2 id="titre-choix">1. Choisissez votre fichier</h2>
+      <div id="zone-depot" class="zone-depot">
+        <button type="button" id="bouton-choisir" class="bouton bouton-principal bouton-grand" disabled>Choisir mon fichier .txt</button>
+        <p id="chargement" class="chargement">Chargement de l'outil… Si le bouton reste gris, rechargez la page.</p>
+        <p class="aide-depot">Vous pouvez aussi faire glisser le fichier dans ce cadre.</p>
+        <input type="file" id="champ-fichier" class="cache-visuel" accept=".txt,text/plain" tabindex="-1" aria-hidden="true">
+      </div>
+    </section>
+
+    <div id="etape-resultat" hidden>
+      <section class="etape" aria-labelledby="titre-apercu">
+        <h2 id="titre-apercu" tabindex="-1">2. Vérifiez le tableau</h2>
+        <p id="resume-fichier" class="resume" translate="no"></p>
+
+        <p id="aide-defilement" class="aide-defilement" hidden>Le tableau est plus large que l'écran&nbsp;: faites-le défiler sur le côté pour voir les autres colonnes.</p>
+        <div id="cadre-tableau" class="tableau-cadre" role="region" aria-labelledby="legende-apercu" tabindex="0">
+          <table id="tableau-apercu">
+            <caption id="legende-apercu"></caption>
+            <thead></thead>
+            <tbody translate="no"></tbody>
+          </table>
+        </div>
+        <p id="suite-apercu" class="suite" hidden></p>
+        <ul id="avertissements" class="avertissements" translate="no" hidden></ul>
+
+        <div class="reglage">
+          <label for="choix-separateur" class="etiquette">Dans votre fichier, les colonnes sont séparées par&nbsp;:</label>
+          <select id="choix-separateur" autocomplete="off" aria-describedby="aide-separateur">
+            <option value="tabulation">des tabulations</option>
+            <option value="point-virgule">des points-virgules ( ; )</option>
+            <option value="virgule">des virgules ( , )</option>
+            <option value="barre">des barres verticales ( | )</option>
+            <option value="espaces">plusieurs espaces</option>
+            <option value="aucun">rien (une seule colonne)</option>
+          </select>
+          <p id="aide-separateur" class="aide">Réglé automatiquement. Changez ce choix seulement si le tableau ci-dessus est mal découpé.</p>
+        </div>
+
+        <details class="details">
+          <summary>Détails techniques</summary>
+          <dl>
+            <dt>Encodage des caractères</dt>
+            <dd id="detail-encodage"></dd>
+            <dt>Lignes vides ignorées</dt>
+            <dd id="detail-lignes-vides"></dd>
+          </dl>
+        </details>
+      </section>
+
+      <section class="etape" aria-labelledby="titre-telechargement">
+        <h2 id="titre-telechargement">3. Téléchargez le fichier CSV</h2>
+        <fieldset class="choix-format">
+          <legend>Pour quel logiciel&nbsp;?</legend>
+          <label class="option">
+            <input type="radio" name="format" value="excel" checked autocomplete="off">
+            <span>
+              <span class="option-titre">Excel (recommandé)</span>
+              <span class="option-detail">Colonnes séparées par des points-virgules, accents bien affichés.</span>
+            </span>
+          </label>
+          <label class="option">
+            <input type="radio" name="format" value="standard" autocomplete="off">
+            <span>
+              <span class="option-titre">CSV standard</span>
+              <span class="option-detail">Colonnes séparées par des virgules, pour d'autres logiciels. Ne convient pas à Excel.</span>
+            </span>
+          </label>
+        </fieldset>
+        <div class="actions">
+          <button type="button" id="bouton-telecharger" class="bouton bouton-principal bouton-grand">Télécharger le fichier CSV</button>
+          <button type="button" class="bouton bouton-secondaire" data-action="recommencer">Recommencer</button>
+        </div>
+      </section>
+    </div>
+
+    <section id="etape-termine" class="etape message message-succes" aria-labelledby="titre-termine" hidden>
+      <h2 id="titre-termine" tabindex="-1">C'est fait&nbsp;!</h2>
+      <p>Le fichier <strong id="nom-telecharge" translate="no"></strong> a été téléchargé.</p>
+      <p id="ouvrir-excel">Pour l'ouvrir avec Excel, cliquez dessus dans la liste des téléchargements de votre navigateur, ou double-cliquez dessus dans le dossier <strong>Téléchargements</strong>.</p>
+      <p id="ouvrir-standard" hidden>Il est au format CSV standard, prévu pour d'autres logiciels qu'Excel. Pour Excel, cliquez sur «&nbsp;Recommencer&nbsp;» et gardez le choix «&nbsp;Excel (recommandé)&nbsp;».</p>
+      <p class="aide">Si vous aviez déjà transformé ce fichier, le nouveau porte un numéro, par exemple «&nbsp;<span id="nom-numerote" translate="no"></span>&nbsp;». Sur téléphone ou tablette, cherchez-le dans l'application Fichiers.</p>
+      <p>Par sécurité, les données ont été effacées de cette page.</p>
+      <p class="aide">Le téléchargement n'a pas démarré&nbsp;? Cliquez sur «&nbsp;Recommencer&nbsp;» et choisissez de nouveau votre fichier.</p>
+      <button type="button" class="bouton bouton-principal bouton-grand" data-action="recommencer">Recommencer</button>
+    </section>
+
+    <p id="annonce" class="cache-visuel" aria-live="polite" translate="no"></p>
+  </main>
+
+  <footer class="pied">
+    <p>Outil gratuit et libre (licence MIT). Une fois la page ouverte, il fonctionne même sans connexion à Internet.</p>
+  </footer>
+</body>
+</html>

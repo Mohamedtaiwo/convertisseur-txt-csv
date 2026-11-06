@@ -1,0 +1,9 @@
+Nom;Prénom;Ville;Téléphone;Remarque
+Lefèvre;Hélène;Besançon;01 99 00 12 34;"Préfère être appelée le matin; jamais le dimanche"
+Durand;François;Évreux;06 39 98 45 67;Voisin du 3e étage
+Moreau;Zoé;Saint-Étienne;01 99 00 76 54;"A écrit : ""Merci pour tout !"""
+Garnier;Jérôme;Nîmes;06 39 98 11 22;"Nouvelle adresse :
+12 rue des Lilas"
+Rousseau;Béatrice;Châlons-en-Champagne;01 99 00 33 44;
+
+Faure;Noël;Hyères;06 39 98 70 08;Anniversaire le 25 décembre

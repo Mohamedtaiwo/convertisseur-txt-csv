@@ -1,0 +1,13 @@
+{
+  "name": "convertisseur-txt-csv",
+  "version": "1.0.0",
+  "description": "Petit outil web pour transformer un fichier .txt en fichier .csv lisible par Excel, entièrement dans le navigateur.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18.6"
+  }
+}

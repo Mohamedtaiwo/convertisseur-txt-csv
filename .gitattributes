@@ -1,0 +1,6 @@
+# Fichiers du site : fins de ligne LF partout.
+* text=auto eol=lf
+
+# Fichiers d'exemple : octets conservés tels quels (encodage et fins de ligne
+# font partie du test).
+exemples/*.txt -text
