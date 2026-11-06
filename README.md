@@ -45,7 +45,7 @@ L'outil est conçu pour que vos données ne quittent pas votre appareil.
 
 À savoir :
 
-- La page elle-même est hébergée par GitHub Pages. Comme tout hébergeur, GitHub peut enregistrer la visite de la page (adresse IP, date et heure). Le contenu de vos fichiers, lui, ne lui est jamais transmis.
+- La page elle-même est hébergée par Vercel. Comme tout hébergeur, Vercel peut enregistrer la visite de la page (adresse IP, date et heure). Le contenu de vos fichiers, lui, ne lui est jamais transmis.
 - Les extensions installées dans le navigateur et ses services en ligne (comme la traduction automatique des pages) échappent aux règles de la page. Le tableau d'aperçu est marqué pour ne pas être traduit.
 
 ## Ce que l'outil sait faire
@@ -86,6 +86,7 @@ Avec le format **CSV standard** ouvert dans un tableur, une valeur qui commence 
 | `js/app.js` | L'interface : choix du fichier, aperçu, téléchargement, effacement des données. |
 | `exemples/` | Trois fichiers `.txt` de démonstration, aux données fictives. |
 | `tests/` | Les tests automatiques. |
+| `vercel.json` | Les règles de sécurité envoyées par l'hébergeur (Vercel) : les mêmes que dans la page, plus l'interdiction d'afficher l'outil à l'intérieur d'un autre site. |
 
 Fichiers d'exemple :
 

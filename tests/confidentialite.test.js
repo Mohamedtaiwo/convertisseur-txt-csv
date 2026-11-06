@@ -133,6 +133,15 @@ describe('Confidentialité : aucun envoi, aucun enregistrement', () => {
     assert.ok(html.indexOf('Content-Security-Policy') < html.search(/<(script|link)\b/i));
   });
 
+  it('l’hébergeur (vercel.json) envoie la même politique de sécurité, sans l’assouplir', () => {
+    const config = JSON.parse(lire('vercel.json'));
+    const regle = (config.headers || []).find((r) => r.source === '/(.*)');
+    assert.ok(regle, 'aucune règle d’en-têtes pour toutes les adresses dans vercel.json');
+    const csp = regle.headers.find((h) => h.key.toLowerCase() === 'content-security-policy');
+    assert.ok(csp, 'en-tête Content-Security-Policy absent de vercel.json');
+    assert.equal(csp.value, CSP + "; frame-ancestors 'none'");
+  });
+
   it('aucun script ni style en ligne dans la page', () => {
     for (const fichier of parType(HTML)) {
       const html = lire(fichier);
