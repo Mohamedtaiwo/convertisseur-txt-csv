@@ -10,12 +10,13 @@
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <script src="js/conversion.js" defer></script>
+  <script src="js/tcd.js" defer></script>
   <script src="js/app.js" defer></script>
 </head>
 <body>
   <main class="page">
     <h1>Transformer un fichier texte en fichier Excel</h1>
-    <p class="intro">Choisissez un fichier <strong>.txt</strong>&nbsp;: vous récupérez un fichier <strong>.csv</strong> qui s'ouvre dans Excel, avec une colonne par information.</p>
+    <p class="intro">Choisissez un fichier <strong>.txt</strong>&nbsp;: vous récupérez un fichier <strong>.csv</strong> qui s'ouvre dans Excel, avec une colonne par information, ou un <strong>tableau croisé dynamique</strong> prêt à l'emploi.</p>
 
     <p class="confidentialite">
       <strong>Votre fichier reste sur votre ordinateur. Rien n'est envoyé ni conservé.</strong>
@@ -104,12 +105,104 @@
           <button type="button" class="bouton bouton-secondaire" data-action="recommencer">Recommencer</button>
         </div>
       </section>
+
+      <section class="etape" aria-labelledby="titre-tcd">
+        <h2 id="titre-tcd">Ou bien&nbsp;: créez un tableau croisé dynamique</h2>
+        <p>Vous obtenez un fichier Excel (.xlsx) avec vos données et un vrai tableau croisé dynamique, que vous pourrez encore modifier dans Excel.</p>
+        <button type="button" id="bouton-tcd" class="bouton bouton-secondaire bouton-grand" aria-expanded="false" aria-controls="panneau-tcd">Créer un tableau croisé dynamique</button>
+
+        <div id="panneau-tcd" class="panneau-tcd" hidden>
+          <p id="resume-tcd" class="resume-tcd" tabindex="-1" translate="no"></p>
+          <p id="erreur-tcd" class="message message-erreur" role="alert" hidden></p>
+
+          <label class="case">
+            <input type="checkbox" id="tcd-entete" autocomplete="off">
+            <span>La première ligne du tableau contient les titres des colonnes</span>
+          </label>
+
+          <div class="grille-tcd" translate="no">
+            <div class="reglage-tcd">
+              <label for="tcd-lignes-1" class="etiquette">Lignes</label>
+              <select id="tcd-lignes-1" autocomplete="off"></select>
+              <label for="tcd-lignes-2" class="etiquette-secondaire">puis, à l'intérieur de chaque ligne</label>
+              <select id="tcd-lignes-2" autocomplete="off"></select>
+            </div>
+            <div class="reglage-tcd">
+              <label for="tcd-colonnes" class="etiquette">Colonnes</label>
+              <select id="tcd-colonnes" autocomplete="off"></select>
+            </div>
+            <fieldset class="reglage-tcd valeurs-tcd">
+              <legend class="etiquette">Valeurs calculées</legend>
+              <div class="ligne-valeur">
+                <select id="tcd-calcul-1" aria-label="Calcul de la valeur 1" autocomplete="off"></select>
+                <span class="de" aria-hidden="true">de</span>
+                <select id="tcd-valeur-1" aria-label="Colonne de la valeur 1" autocomplete="off"></select>
+              </div>
+              <div class="ligne-valeur">
+                <select id="tcd-calcul-2" aria-label="Calcul de la valeur 2" autocomplete="off"></select>
+                <span class="de" aria-hidden="true">de</span>
+                <select id="tcd-valeur-2" aria-label="Colonne de la valeur 2" autocomplete="off"></select>
+              </div>
+              <div class="ligne-valeur">
+                <select id="tcd-calcul-3" aria-label="Calcul de la valeur 3" autocomplete="off"></select>
+                <span class="de" aria-hidden="true">de</span>
+                <select id="tcd-valeur-3" aria-label="Colonne de la valeur 3" autocomplete="off"></select>
+              </div>
+            </fieldset>
+            <div class="reglage-tcd">
+              <label for="tcd-affichage" class="etiquette">Afficher les valeurs</label>
+              <select id="tcd-affichage" autocomplete="off">
+                <option value="normal">telles quelles</option>
+                <option value="total">en % du total général</option>
+                <option value="ligne">en % du total de la ligne</option>
+                <option value="colonne">en % du total de la colonne</option>
+              </select>
+            </div>
+            <div class="reglage-tcd">
+              <label for="tcd-tri" class="etiquette">Trier les lignes</label>
+              <select id="tcd-tri" autocomplete="off">
+                <option value="libelle">dans l'ordre alphabétique</option>
+                <option value="decroissant">la plus grande valeur d'abord</option>
+                <option value="croissant">la plus petite valeur d'abord</option>
+              </select>
+            </div>
+            <div class="reglage-tcd">
+              <label for="tcd-filtre" class="etiquette">Filtre</label>
+              <select id="tcd-filtre" autocomplete="off"></select>
+              <fieldset id="tcd-filtre-valeurs" class="filtre-valeurs" hidden>
+                <legend>Valeurs gardées</legend>
+                <div class="actions-filtre">
+                  <button type="button" id="tcd-tout-cocher" class="bouton-lien">Tout cocher</button>
+                  <button type="button" id="tcd-tout-decocher" class="bouton-lien">Tout décocher</button>
+                </div>
+                <div id="tcd-filtre-liste" class="filtre-liste"></div>
+              </fieldset>
+              <p id="tcd-filtre-trop" class="aide" hidden>Cette colonne a trop de valeurs différentes pour les choisir ici&nbsp;: le filtre sera placé dans le tableau croisé, réglez-le dans Excel.</p>
+            </div>
+          </div>
+          <p class="aide">Les dates sont regroupées automatiquement&nbsp;: choisissez par exemple «&nbsp;Date (mois)&nbsp;» ou «&nbsp;Date (année)&nbsp;».</p>
+
+          <div id="cadre-tcd" class="tableau-cadre" role="region" aria-labelledby="legende-tcd" tabindex="0">
+            <table id="tableau-tcd" class="tableau-tcd">
+              <caption id="legende-tcd">Aperçu du tableau croisé</caption>
+              <thead translate="no"></thead>
+              <tbody translate="no"></tbody>
+            </table>
+          </div>
+          <p id="suite-tcd" class="suite" hidden></p>
+
+          <div class="actions">
+            <button type="button" id="bouton-telecharger-tcd" class="bouton bouton-principal bouton-grand">Télécharger le tableau croisé (Excel)</button>
+          </div>
+        </div>
+      </section>
     </div>
 
     <section id="etape-termine" class="etape message message-succes" aria-labelledby="titre-termine" hidden>
       <h2 id="titre-termine" tabindex="-1">C'est fait&nbsp;!</h2>
       <p>Le fichier <strong id="nom-telecharge" translate="no"></strong> a été téléchargé.</p>
       <p id="ouvrir-excel">Pour l'ouvrir avec Excel, cliquez dessus dans la liste des téléchargements de votre navigateur, ou double-cliquez dessus dans le dossier <strong>Téléchargements</strong>.</p>
+      <p id="ouvrir-tcd" hidden>Ouvrez-le avec Excel&nbsp;: le tableau croisé est sur la première feuille, vos données sur la feuille «&nbsp;Données&nbsp;». Si Excel affiche un bandeau «&nbsp;Mode protégé&nbsp;», cliquez sur «&nbsp;Activer la modification&nbsp;»&nbsp;: le tableau croisé se remplit.</p>
       <p id="ouvrir-standard" hidden>Il est au format CSV standard, prévu pour d'autres logiciels qu'Excel. Pour Excel, cliquez sur «&nbsp;Recommencer&nbsp;» et gardez le choix «&nbsp;Excel (recommandé)&nbsp;».</p>
       <p class="aide">Si vous aviez déjà transformé ce fichier, le nouveau porte un numéro, par exemple «&nbsp;<span id="nom-numerote" translate="no"></span>&nbsp;». Sur téléphone ou tablette, cherchez-le dans l'application Fichiers.</p>
       <p>Par sécurité, les données ont été effacées de cette page.</p>

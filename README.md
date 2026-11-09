@@ -35,6 +35,23 @@ L'outil devine tout seul comment les colonnes sont séparées dans votre fichier
 | **Excel (recommandé)** | point-virgule `;` | UTF-8 avec BOM | Excel en français : un double-clic suffit ; les accents s'affichent bien et les codes (codes postaux, téléphones) gardent leurs zéros. |
 | **CSV standard** | virgule `,` | UTF-8 sans BOM | Les autres logiciels (format CSV standard, RFC 4180). Ne convient pas à Excel en français. |
 
+## Tableau croisé dynamique
+
+Au lieu du fichier CSV, l'outil peut créer un fichier Excel (`.xlsx`) contenant vos données et un **vrai tableau croisé dynamique**, que vous pourrez encore modifier dans Excel (déplacer les champs, changer les calculs, ajouter des segments…).
+
+1. Après avoir vérifié le tableau, cliquez sur **Créer un tableau croisé dynamique**.
+2. L'outil fait une **proposition automatique** : par exemple la somme des montants par catégorie, avec les mois en colonnes. Les lignes de titre au-dessus du tableau et les lignes de total sont ignorées, pour ne rien compter deux fois.
+3. Modifiez les choix si besoin, l'aperçu se met à jour aussitôt :
+   - **Lignes** (avec un second niveau possible) et **Colonnes** ;
+   - **Valeurs calculées** : jusqu'à trois, avec somme, nombre, moyenne, minimum ou maximum ;
+   - **Afficher les valeurs** telles quelles, ou en % du total général, de la ligne ou de la colonne ;
+   - **Trier les lignes** par ordre alphabétique ou selon la valeur ;
+   - **Filtre** : choisissez une colonne et cochez les valeurs à garder.
+4. Les **dates sont regroupées automatiquement** : choisissez « Date (mois) », « Date (trimestre) » ou « Date (année) ».
+5. Cliquez sur **Télécharger le tableau croisé (Excel)**. Le fichier `releve.txt` devient `releve - tableau croisé.xlsx`.
+
+Dans Excel, le tableau croisé est sur la première feuille, vos données sur la feuille « Données ». Excel calcule le tableau croisé à l'ouverture : si un bandeau « Mode protégé » s'affiche (fichier venant d'Internet), cliquez sur **Activer la modification** pour qu'il se remplisse.
+
 ## Confidentialité
 
 L'outil est conçu pour que vos données ne quittent pas votre appareil.
@@ -85,6 +102,7 @@ Avec le format **CSV standard** ouvert dans un tableur, une valeur qui commence 
 |---|---|
 | `index.html`, `style.css` | La page. |
 | `js/conversion.js` | Toute la logique de conversion, en fonctions pures (aucun accès au réseau ni à la page). |
+| `js/tcd.js` | Le tableau croisé dynamique : préparation des données (nombres, dates), proposition automatique, calcul de l'aperçu, et fabrication du fichier `.xlsx` (sans aucune bibliothèque). Les adresses `schemas.openxmlformats.org` qu'il contient sont des noms de format exigés par Excel, jamais chargés. |
 | `js/app.js` | L'interface : choix du fichier, aperçu, téléchargement, effacement des données. |
 | `exemples/` | Trois fichiers `.txt` de démonstration, aux données fictives. |
 | `tests/` | Les tests automatiques. |

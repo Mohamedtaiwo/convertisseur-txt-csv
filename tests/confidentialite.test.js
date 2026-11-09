@@ -75,7 +75,8 @@ const INTERDITS = [
 // Canaux que la CSP ne contrôle pas : ils pourraient emporter des données
 // dans une adresse, vers le site lui-même ou ailleurs.
 const INTERDITS_JS = [
-  ['navigation (location)', /\blocation\b/],
+  // « <location » est une balise du fichier Excel (tcd.js), pas une navigation.
+  ['navigation (location)', /(?<!<)\blocation\b/],
   ['ouverture de fenêtre (open)', /\bopen\s*\(/],
   ['navigation (API Navigation)', /\bnavigation\s*\.\s*(navigate|reload|traverseTo|back|forward)\b/],
   ['adresse de la page modifiée (history)', /\bhistory\s*\.\s*(pushState|replaceState)\b/],
@@ -91,7 +92,10 @@ const INTERDITS_JS = [
   ['redirection (meta refresh)', /http-?equiv/i],
   ['CSS construit en JavaScript (url, image-set, @import)', /(?<!new\s+)\burl\s*\(|image-set|@import/i],
   ['console (garderait les données en mémoire)', /\bconsole\s*\./],
-  ['adresse web', /https?:\/\//i],
+  // Seule exception : « http://schemas.openxmlformats.org/… », nom du format
+  // exigé à l'intérieur d'un fichier Excel (tcd.js). Ce n'est qu'un nom : rien
+  // n'est chargé depuis cette adresse (et la CSP l'interdirait).
+  ['adresse web', /https?:\/\/(?!schemas\.openxmlformats\.org\/)/i],
   ['adresse sans protocole (//site)', /["'`]\/\/[a-z0-9]/i]
 ];
 

@@ -9,6 +9,7 @@
   'use strict';
 
   var C = window.ConversionCSV;
+  var T = window.TableauCroise; // tableau croisé dynamique (peut manquer : le reste fonctionne)
 
   var TAILLE_MAX = 50 * 1024 * 1024; // 50 Mo
   var LIGNES_APERCU = 10;
@@ -26,6 +27,13 @@
   var DELAI_DOUBLE_CLIC = 2500;
   // Au-delà de cette longueur de texte, recalculer le tableau prend un moment.
   var TEXTE_LONG = 2000000;
+
+  // Tableau croisé dynamique.
+  var LIGNES_APERCU_TCD = 300;
+  var MAX_ELEMENTS_FILTRE = 200;
+  var SANS_CHAMP = '-1';
+  var TYPE_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  var TEXTES_CALCULS = { somme: 'Somme', nombre: 'Nombre', moyenne: 'Moyenne', min: 'Minimum', max: 'Maximum' };
 
   var INSECABLE = '\u00A0'; // espace insécable (avant « : », « ? »… et dans « »)
 
@@ -82,7 +90,31 @@
     nomNumerote: $('nom-numerote'),
     ouvrirExcel: $('ouvrir-excel'),
     ouvrirStandard: $('ouvrir-standard'),
-    annonce: $('annonce')
+    ouvrirTcd: $('ouvrir-tcd'),
+    annonce: $('annonce'),
+    // Tableau croisé dynamique
+    sectionTcd: $('titre-tcd') ? $('titre-tcd').parentNode : null,
+    boutonTcd: $('bouton-tcd'),
+    panneauTcd: $('panneau-tcd'),
+    resumeTcd: $('resume-tcd'),
+    erreurTcd: $('erreur-tcd'),
+    tcdEntete: $('tcd-entete'),
+    tcdLignes1: $('tcd-lignes-1'),
+    tcdLignes2: $('tcd-lignes-2'),
+    tcdColonnes: $('tcd-colonnes'),
+    tcdCalculs: [$('tcd-calcul-1'), $('tcd-calcul-2'), $('tcd-calcul-3')],
+    tcdValeurs: [$('tcd-valeur-1'), $('tcd-valeur-2'), $('tcd-valeur-3')],
+    tcdAffichage: $('tcd-affichage'),
+    tcdTri: $('tcd-tri'),
+    tcdFiltre: $('tcd-filtre'),
+    tcdFiltreValeurs: $('tcd-filtre-valeurs'),
+    tcdFiltreListe: $('tcd-filtre-liste'),
+    tcdFiltreTrop: $('tcd-filtre-trop'),
+    tcdToutCocher: $('tcd-tout-cocher'),
+    tcdToutDecocher: $('tcd-tout-decocher'),
+    tableauTcd: $('tableau-tcd'),
+    suiteTcd: $('suite-tcd'),
+    boutonTelechargerTcd: $('bouton-telecharger-tcd')
   };
 
   // Tout ce que la page sait du fichier en cours. Vidé après le téléchargement.
@@ -105,7 +137,8 @@
     finAbimee: false,
     plusieursFichiers: false,
     recalculEnAttente: null, // nouveau découpage du tableau pas encore fait
-    url: null,           // adresse temporaire du fichier CSV généré
+    tcd: null,           // tableau croisé : données préparées, réglages, filtre
+    url: null,           // adresse temporaire du fichier généré (CSV ou Excel)
     minuterie: null,
     termineA: 0          // moment où l'écran « C'est fait » est apparu
   };
@@ -244,6 +277,7 @@
     el.aideDefilement.hidden = true;
     el.cadreTableau.removeAttribute('aria-describedby');
     el.cadreTableau.removeAttribute('aria-busy');
+    viderTcd();
     oublierDerniereRecherche();
   }
 
@@ -472,6 +506,8 @@
         etat.longueurMax = resultat.longueurMax;
       }
       afficherResultat(false);
+      // Les colonnes ont changé : le tableau croisé repart d'une nouvelle proposition.
+      if (etat.tcd) preparerTcd();
       annoncer('Tableau mis à jour' + INSECABLE + ': ' + pluriel(etat.colonnes, 'colonne') + '.');
     };
     etat.recalculEnAttente = appliquer;
@@ -495,12 +531,16 @@
   function telecharger() {
     if (etat.recalculEnAttente) etat.recalculEnAttente(); // un changement de séparateur pas encore appliqué
     if (!etat.lignes) return;
-    var nom = etat.nomCsv;
     var format = formatChoisi();
     var csv = C.genererCsv(etat.lignes, format);
     var fichier = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     csv = null;
+    enregistrer(fichier, etat.nomCsv, format);
+  }
 
+  // Fait télécharger le fichier créé (CSV ou Excel), puis efface les données
+  // de la page et affiche l'écran « C'est fait ». sorte : excel, standard ou tcd.
+  function enregistrer(fichier, nom, sorte) {
     libererFichierGenere();
     etat.url = URL.createObjectURL(fichier);
     fichier = null;
@@ -516,13 +556,394 @@
     effacerDonnees();
     el.nomTelecharge.textContent = nom;
     // Le navigateur numérote le fichier s'il en existe déjà un du même nom.
-    el.nomNumerote.textContent = nom.slice(0, -'.csv'.length) + ' (1).csv';
-    el.ouvrirExcel.hidden = format !== 'excel';
-    el.ouvrirStandard.hidden = format !== 'standard';
+    var point = nom.lastIndexOf('.');
+    el.nomNumerote.textContent = nom.slice(0, point) + ' (1)' + nom.slice(point);
+    el.ouvrirExcel.hidden = sorte !== 'excel';
+    el.ouvrirStandard.hidden = sorte !== 'standard';
+    el.ouvrirTcd.hidden = sorte !== 'tcd';
     afficherEtape('termine');
     etat.termineA = Date.now();
     el.titreTermine.focus();
     annoncer('Le fichier ' + nom + ' a été téléchargé.');
+  }
+
+  /* ---- Tableau croisé dynamique ---------------------------------------- */
+
+  // Oublie le tableau croisé : données préparées, et listes de choix (elles
+  // contiennent les noms des colonnes du fichier).
+  function viderTcd() {
+    etat.tcd = null;
+    if (!el.panneauTcd) return;
+    var listes = [el.tcdLignes1, el.tcdLignes2, el.tcdColonnes, el.tcdFiltre].concat(el.tcdCalculs, el.tcdValeurs);
+    for (var i = 0; i < listes.length; i++) listes[i].textContent = '';
+    el.tcdFiltreListe.textContent = '';
+    el.tcdFiltreValeurs.hidden = true;
+    el.tcdFiltreTrop.hidden = true;
+    el.tableauTcd.tHead.textContent = '';
+    el.tableauTcd.tBodies[0].textContent = '';
+    el.resumeTcd.textContent = '';
+    el.suiteTcd.textContent = '';
+    el.suiteTcd.hidden = true;
+    masquerErreurTcd();
+    el.panneauTcd.hidden = true;
+    el.boutonTcd.hidden = false;
+    el.boutonTcd.setAttribute('aria-expanded', 'false');
+  }
+
+  function montrerErreurTcd(message) {
+    el.erreurTcd.textContent = message;
+    el.erreurTcd.hidden = false;
+  }
+
+  function masquerErreurTcd() {
+    el.erreurTcd.hidden = true;
+    el.erreurTcd.textContent = '';
+  }
+
+  function ajouterOption(liste, valeur, texte) {
+    var option = document.createElement('option');
+    option.value = valeur;
+    option.textContent = texte;
+    liste.appendChild(option);
+  }
+
+  function remplirListeChamps(liste, noms, texteAucun) {
+    liste.textContent = '';
+    if (texteAucun) ajouterOption(liste, SANS_CHAMP, texteAucun);
+    for (var j = 0; j < noms.length; j++) ajouterOption(liste, String(j), noms[j]);
+  }
+
+  function ouvrirTcd() {
+    if (etat.recalculEnAttente) etat.recalculEnAttente();
+    if (!etat.lignes) return;
+    preparerTcd();
+    el.panneauTcd.hidden = false;
+    el.boutonTcd.hidden = true;
+    el.boutonTcd.setAttribute('aria-expanded', 'true');
+    el.resumeTcd.focus();
+  }
+
+  // Prépare les données et applique la proposition automatique.
+  // entete : true / false si la personne a coché ou décoché la case des titres.
+  function preparerTcd(entete) {
+    var donnees = T.preparer(etat.lignes, typeof entete === 'boolean' ? { entete: entete } : undefined);
+    etat.tcd = { donnees: donnees, reglages: T.proposer(donnees), propose: true, elementsFiltre: null, enregistrements: 0, precedents: {} };
+    el.tcdEntete.checked = donnees.entete;
+    remplirChoixTcd();
+    calculerTcd();
+  }
+
+  function remplirChoixTcd() {
+    var noms = etat.tcd.donnees.noms;
+    var r = etat.tcd.reglages;
+    remplirListeChamps(el.tcdLignes1, noms, '');
+    remplirListeChamps(el.tcdLignes2, noms, '(rien de plus)');
+    remplirListeChamps(el.tcdColonnes, noms, '(aucune)');
+    remplirListeChamps(el.tcdFiltre, noms, '(aucun)');
+    for (var k = 0; k < el.tcdValeurs.length; k++) {
+      remplirListeChamps(el.tcdValeurs[k], noms, k > 0 ? '(aucune)' : '');
+      el.tcdCalculs[k].textContent = '';
+      for (var c = 0; c < T.CALCULS.length; c++) ajouterOption(el.tcdCalculs[k], T.CALCULS[c], TEXTES_CALCULS[T.CALCULS[c]]);
+      var v = r.valeurs[k];
+      el.tcdValeurs[k].value = v ? String(v.champ) : SANS_CHAMP;
+      el.tcdCalculs[k].value = v ? v.calcul : 'somme';
+      el.tcdCalculs[k].disabled = !v;
+    }
+    el.tcdLignes1.value = String(r.lignes[0]);
+    el.tcdLignes2.value = r.lignes.length > 1 ? String(r.lignes[1]) : SANS_CHAMP;
+    el.tcdColonnes.value = r.colonnes.length ? String(r.colonnes[0]) : SANS_CHAMP;
+    el.tcdFiltre.value = String(r.filtre.champ);
+    el.tcdAffichage.value = r.affichage;
+    el.tcdTri.value = r.tri;
+    remplirFiltre();
+  }
+
+  // Réglages choisis dans la page.
+  function lireReglagesTcd() {
+    var r = {
+      lignes: [Number(el.tcdLignes1.value)],
+      colonnes: [],
+      valeurs: [],
+      affichage: el.tcdAffichage.value,
+      tri: el.tcdTri.value,
+      filtre: { champ: Number(el.tcdFiltre.value), exclus: etat.tcd.reglages.filtre.exclus }
+    };
+    if (el.tcdLignes2.value !== SANS_CHAMP) r.lignes.push(Number(el.tcdLignes2.value));
+    if (el.tcdColonnes.value !== SANS_CHAMP) r.colonnes.push(Number(el.tcdColonnes.value));
+    for (var k = 0; k < el.tcdValeurs.length; k++) {
+      if (el.tcdValeurs[k].value !== SANS_CHAMP) {
+        r.valeurs.push({ champ: Number(el.tcdValeurs[k].value), calcul: el.tcdCalculs[k].value });
+      }
+    }
+    return T.normaliserReglages(etat.tcd.donnees, r);
+  }
+
+  // Liste des valeurs du filtre, à cocher ou décocher.
+  function remplirFiltre() {
+    var champ = Number(el.tcdFiltre.value);
+    etat.tcd.filtreAffiche = champ;
+    el.tcdFiltreListe.textContent = '';
+    etat.tcd.elementsFiltre = null;
+    el.tcdFiltreValeurs.hidden = true;
+    el.tcdFiltreTrop.hidden = true;
+    if (champ < 0) return;
+    var elements = T.elementsDistincts(etat.tcd.donnees, champ, MAX_ELEMENTS_FILTRE);
+    if (!elements) {
+      el.tcdFiltreTrop.hidden = false;
+      return;
+    }
+    etat.tcd.elementsFiltre = elements;
+    var exclus = etat.tcd.reglages.filtre.exclus;
+    for (var i = 0; i < elements.length; i++) {
+      var etiquette = document.createElement('label');
+      etiquette.className = 'case';
+      var caseACocher = document.createElement('input');
+      caseACocher.type = 'checkbox';
+      caseACocher.value = String(i);
+      caseACocher.checked = !exclus[elements[i].cle];
+      var texte = document.createElement('span');
+      texte.textContent = elements[i].libelle;
+      etiquette.appendChild(caseACocher);
+      etiquette.appendChild(texte);
+      el.tcdFiltreListe.appendChild(etiquette);
+    }
+    el.tcdFiltreValeurs.hidden = false;
+  }
+
+  function changerCaseFiltre(e) {
+    var elements = etat.tcd && etat.tcd.elementsFiltre;
+    if (!elements || !e.target || e.target.type !== 'checkbox') return;
+    var element = elements[Number(e.target.value)];
+    if (!element) return;
+    if (e.target.checked) delete etat.tcd.reglages.filtre.exclus[element.cle];
+    else etat.tcd.reglages.filtre.exclus[element.cle] = true;
+    calculerTcd();
+  }
+
+  function cocherTout(coche) {
+    if (!etat.tcd || !etat.tcd.elementsFiltre) return;
+    var elements = etat.tcd.elementsFiltre;
+    var exclus = {};
+    if (!coche) {
+      for (var i = 0; i < elements.length; i++) exclus[elements[i].cle] = true;
+    }
+    etat.tcd.reglages.filtre.exclus = exclus;
+    var cases = el.tcdFiltreListe.querySelectorAll('input');
+    for (var k = 0; k < cases.length; k++) cases[k].checked = coche;
+    calculerTcd();
+  }
+
+  // Une colonne ne peut servir qu'à un endroit (lignes, colonnes ou filtre) :
+  // la choisir ailleurs la retire de son ancienne place.
+  function retenirChoix(e) {
+    if (etat.tcd) etat.tcd.precedents[e.target.id] = e.target.value;
+  }
+
+  function changerPlace(e) {
+    if (!etat.tcd) return;
+    var liste = e.target;
+    var choix = liste.value;
+    var places = [el.tcdLignes1, el.tcdLignes2, el.tcdColonnes, el.tcdFiltre];
+    if (choix !== SANS_CHAMP) {
+      for (var i = 0; i < places.length; i++) {
+        if (places[i] === liste || places[i].value !== choix) continue;
+        if (places[i] === el.tcdLignes1) {
+          // Les lignes ne restent jamais vides : elles reprennent l'ancien choix.
+          var ancien = etat.tcd.precedents[liste.id];
+          places[i].value = ancien !== undefined && ancien !== SANS_CHAMP && ancien !== choix ? ancien : premierChampLibre(places);
+        } else {
+          places[i].value = SANS_CHAMP;
+        }
+      }
+    }
+    // Nouvelle colonne de filtre : toutes ses valeurs sont gardées au départ.
+    if (Number(el.tcdFiltre.value) !== etat.tcd.filtreAffiche) {
+      etat.tcd.reglages.filtre.exclus = {};
+      remplirFiltre();
+    }
+    etat.tcd.precedents[liste.id] = liste.value;
+    calculerTcd();
+  }
+
+  function premierChampLibre(places) {
+    var pris = {};
+    for (var i = 0; i < places.length; i++) pris[places[i].value] = true;
+    for (var j = 0; j < etat.tcd.donnees.noms.length; j++) {
+      if (!pris[String(j)]) return String(j);
+    }
+    return '0';
+  }
+
+  // Une nouvelle colonne de valeurs : somme pour des nombres, sinon nombre de lignes.
+  function changerValeur(k) {
+    if (!etat.tcd) return;
+    var choix = el.tcdValeurs[k].value;
+    el.tcdCalculs[k].disabled = choix === SANS_CHAMP;
+    if (choix !== SANS_CHAMP) {
+      el.tcdCalculs[k].value = etat.tcd.donnees.types[Number(choix)] === 'nombre' ? 'somme' : 'nombre';
+    }
+    calculerTcd();
+  }
+
+  function calculerTcd() {
+    if (!etat.tcd) return;
+    masquerErreurTcd();
+    var r = lireReglagesTcd();
+    etat.tcd.reglages = r;
+    var resultat = T.calculer(etat.tcd.donnees, r);
+    etat.tcd.enregistrements = resultat.enregistrements;
+    afficherTcd(resultat);
+    etat.tcd.propose = false;
+  }
+
+  function texteListe(mots) {
+    if (mots.length <= 1) return mots.join('');
+    return mots.slice(0, -1).join(', ') + ' et ' + mots[mots.length - 1];
+  }
+
+  function guillemetsTous(noms) {
+    var sortie = [];
+    for (var i = 0; i < noms.length; i++) sortie.push(guillemets(noms[i]));
+    return sortie;
+  }
+
+  function resumerTcd(resultat) {
+    var d = etat.tcd.donnees;
+    var noms = [];
+    for (var x = 0; x < resultat.valeurs.length; x++) noms.push(resultat.valeurs[x].nom);
+    var phrase = (etat.tcd.propose ? 'Proposition automatique' + INSECABLE + ': ' : 'Tableau' + INSECABLE + ': ') +
+      texteListe(guillemetsTous(noms)) + ' par ' + guillemetsTous(resultat.nomsLignes).join(' puis par ') +
+      (resultat.nomColonnes ? ', avec ' + guillemets(resultat.nomColonnes) + ' en colonnes' : '') + '. ' +
+      pluriel(resultat.enregistrements, 'ligne') + ' du fichier ' + (resultat.enregistrements > 1 ? 'sont comptées' : 'est comptée') + '.';
+    var notes = [];
+    if (d.lignesTitre) notes.push(pluriel(d.lignesTitre, 'ligne') + ' de titre au-dessus du tableau');
+    if (d.lignesTotal) notes.push(pluriel(d.lignesTotal, 'ligne') + ' de total (pour ne pas compter deux fois)');
+    if (notes.length) phrase += ' Ignorées' + INSECABLE + ': ' + texteListe(notes) + '.';
+    if (d.tronque) phrase += ' Le fichier dépasse la taille d’une feuille Excel' + INSECABLE + ': les dernières lignes ne sont pas reprises.';
+    if (etat.tcd.propose) phrase += ' Modifiez les choix ci-dessous si besoin.';
+    return phrase;
+  }
+
+  function celluleTcd(ligne, texte, classe) {
+    var td = document.createElement('td');
+    td.textContent = texte;
+    if (classe) td.className = classe;
+    ligne.appendChild(td);
+  }
+
+  function afficherTcd(resultat) {
+    el.resumeTcd.textContent = resumerTcd(resultat);
+    var tete = el.tableauTcd.tHead;
+    var corps = el.tableauTcd.tBodies[0];
+    tete.textContent = '';
+    corps.textContent = '';
+    var valeurs = resultat.valeurs;
+    var plusieurs = valeurs.length > 1;
+    var x;
+
+    var ligneTete = document.createElement('tr');
+    var coin = document.createElement('th');
+    coin.scope = 'col';
+    coin.textContent = resultat.nomsLignes.join(' / ');
+    ligneTete.appendChild(coin);
+    function titreColonne(texte) {
+      var th = document.createElement('th');
+      th.scope = 'col';
+      th.textContent = texte;
+      ligneTete.appendChild(th);
+    }
+    for (var c = 0; c < resultat.colonnes.length; c++) {
+      for (x = 0; x < valeurs.length; x++) {
+        titreColonne(resultat.colonnes[c].libelle + (plusieurs ? ' – ' + valeurs[x].nom : ''));
+      }
+    }
+    for (x = 0; x < valeurs.length; x++) {
+      titreColonne(resultat.colonnes.length ? 'Total' + (plusieurs ? ' – ' + valeurs[x].nom : '') : valeurs[x].nom);
+    }
+    tete.appendChild(ligneTete);
+
+    function ligneCorps(ligne, classe) {
+      var tr = document.createElement('tr');
+      if (classe) tr.className = classe;
+      var th = document.createElement('th');
+      th.scope = 'row';
+      th.textContent = ligne.libelle;
+      tr.appendChild(th);
+      for (var c = 0; c < ligne.cellules.length; c++) {
+        for (var x = 0; x < valeurs.length; x++) celluleTcd(tr, T.formaterValeur(ligne.cellules[c][x], valeurs[x].format), 'nombre');
+      }
+      for (x = 0; x < valeurs.length; x++) celluleTcd(tr, T.formaterValeur(ligne.totaux[x], valeurs[x].format), 'nombre total-ligne');
+      corps.appendChild(tr);
+    }
+
+    if (resultat.enregistrements === 0) {
+      var vide = document.createElement('tr');
+      celluleTcd(vide, 'Aucune ligne ne correspond au filtre' + INSECABLE + ': cochez au moins une valeur.', 'vide');
+      vide.firstChild.colSpan = ligneTete.childNodes.length;
+      corps.appendChild(vide);
+    } else {
+      var lignes = resultat.lignes;
+      var nb = Math.min(lignes.length, LIGNES_APERCU_TCD);
+      for (var i = 0; i < nb; i++) {
+        ligneCorps(lignes[i], lignes[i].niveau ? 'niveau-2' : (lignes[i].groupe ? 'groupe' : ''));
+      }
+      ligneCorps(resultat.total, 'total');
+    }
+    var reste = resultat.lignes.length - LIGNES_APERCU_TCD;
+    el.suiteTcd.textContent = reste > 0
+      ? '… et ' + pluriel(reste, 'autre ligne', 'autres lignes') + ' dans le fichier Excel.'
+      : '';
+    el.suiteTcd.hidden = reste <= 0;
+  }
+
+  function nomFichierXlsx() {
+    return etat.nomCsv.replace(/\.csv$/i, '') + ' - tableau croisé.xlsx';
+  }
+
+  function telechargerTcd() {
+    if (!etat.tcd) return;
+    calculerTcd();
+    if (!etat.tcd.enregistrements) {
+      montrerErreurTcd('Aucune ligne ne correspond au filtre' + INSECABLE + ': cochez au moins une valeur, puis réessayez.');
+      el.erreurTcd.scrollIntoView({ block: 'center' });
+      return;
+    }
+    var morceaux;
+    try {
+      morceaux = T.genererXlsx(etat.tcd.donnees, etat.tcd.reglages);
+    } catch (e) {
+      montrerErreurTcd("Le fichier Excel n'a pas pu être créé (le fichier est peut-être trop gros pour ce navigateur). " +
+        'Essayez plutôt le fichier CSV.');
+      return;
+    }
+    var fichier = new Blob(morceaux, { type: TYPE_XLSX });
+    morceaux = null;
+    enregistrer(fichier, nomFichierXlsx(), 'tcd');
+  }
+
+  function activerTcd() {
+    if (!T || !el.panneauTcd) {
+      if (el.sectionTcd) el.sectionTcd.hidden = true;
+      return;
+    }
+    el.boutonTcd.addEventListener('click', clicSimple(ouvrirTcd));
+    el.boutonTelechargerTcd.addEventListener('click', clicSimple(telechargerTcd));
+    el.tcdEntete.addEventListener('change', function () {
+      if (etat.lignes) preparerTcd(el.tcdEntete.checked);
+    });
+    var places = [el.tcdLignes1, el.tcdLignes2, el.tcdColonnes, el.tcdFiltre];
+    for (var i = 0; i < places.length; i++) {
+      places[i].addEventListener('focus', retenirChoix);
+      places[i].addEventListener('change', changerPlace);
+    }
+    el.tcdValeurs.forEach(function (liste, k) {
+      liste.addEventListener('change', function () { changerValeur(k); });
+    });
+    var autres = el.tcdCalculs.concat([el.tcdAffichage, el.tcdTri]);
+    for (i = 0; i < autres.length; i++) autres[i].addEventListener('change', calculerTcd);
+    el.tcdFiltreListe.addEventListener('change', changerCaseFiltre);
+    el.tcdToutCocher.addEventListener('click', function () { cocherTout(true); });
+    el.tcdToutDecocher.addEventListener('click', function () { cocherTout(false); });
   }
 
   /* ---- Glisser-déposer ------------------------------------------------- */
@@ -645,6 +1066,7 @@
       }));
     }
 
+    activerTcd();
     activerGlisserDeposer();
     window.addEventListener('resize', mettreAJourAideDefilement);
 
