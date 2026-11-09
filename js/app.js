@@ -35,6 +35,9 @@
   var TYPE_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   var TEXTES_CALCULS = { somme: 'Somme', nombre: 'Nombre', moyenne: 'Moyenne', min: 'Minimum', max: 'Maximum' };
 
+  // Les deux outils proposés sur la page d'accueil.
+  var NOMS_OUTILS = { csv: 'TXT en CSV', tcd: 'TXT en tableau croisé dynamique' };
+
   var INSECABLE = '\u00A0'; // espace insécable (avant « : », « ? »… et dans « »)
 
   var MESSAGES = {
@@ -43,6 +46,7 @@
     'binaire': "Ce fichier n'est pas un fichier texte. Choisissez un fichier dont le nom se termine par .txt.",
     'rtf': "Ce fichier est un document de traitement de texte (Word ou WordPad), pas un simple fichier texte. " +
       "Enregistrez-le d'abord au format " + guillemets('Texte (.txt)') + ', puis réessayez.',
+    'outil': "Choisissez d'abord ce que vous voulez faire" + INSECABLE + ': un fichier CSV ou un tableau croisé dynamique.',
     'dossier': 'Vous avez déposé un dossier. Ouvrez-le, puis faites glisser le fichier .txt lui-même.',
     'trop-gros': 'Ce fichier est trop gros (plus de 50' + INSECABLE + 'Mo). Cet outil est prévu pour des fichiers plus petits.',
     'lecture': "Ce fichier n'a pas pu être lu. Réessayez, ou choisissez un autre fichier.",
@@ -67,6 +71,11 @@
     boutonChoisir: $('bouton-choisir'),
     chargement: $('chargement'),
     champFichier: $('champ-fichier'),
+    etapeOutil: $('etape-outil'),
+    titreOutil: $('titre-outil'),
+    cartesOutils: document.querySelectorAll('[data-outil]'),
+    nomOutil: $('nom-outil'),
+    sectionCsv: $('section-csv'),
     etapeChoix: $('etape-choix'),
     etapeResultat: $('etape-resultat'),
     etapeTermine: $('etape-termine'),
@@ -93,8 +102,7 @@
     ouvrirTcd: $('ouvrir-tcd'),
     annonce: $('annonce'),
     // Tableau croisé dynamique
-    sectionTcd: $('titre-tcd') ? $('titre-tcd').parentNode : null,
-    boutonTcd: $('bouton-tcd'),
+    sectionTcd: $('section-tcd'),
     panneauTcd: $('panneau-tcd'),
     resumeTcd: $('resume-tcd'),
     erreurTcd: $('erreur-tcd'),
@@ -121,6 +129,7 @@
   var etat = {
     lecture: 0,          // numéro de la lecture en cours (une lecture annulée est ignorée)
     horsService: false,  // navigateur incompatible
+    outil: null,         // outil choisi sur la page d'accueil : 'csv' ou 'tcd'
     nomFichier: '',
     nomCsv: '',
     texte: null,
@@ -199,6 +208,8 @@
   /* ---- Étapes et messages ---------------------------------------------- */
 
   function afficherEtape(nom) {
+    if (nom === 'choix' && !etat.outil) nom = 'outil';
+    el.etapeOutil.hidden = nom !== 'outil';
     el.etapeChoix.hidden = nom !== 'choix';
     el.etapeResultat.hidden = nom !== 'resultat';
     el.etapeTermine.hidden = nom !== 'termine';
@@ -206,6 +217,10 @@
 
   function occupe(actif) {
     el.boutonChoisir.disabled = actif || etat.horsService;
+    for (var i = 0; i < el.cartesOutils.length; i++) {
+      var carte = el.cartesOutils[i];
+      carte.disabled = etat.horsService || (carte.getAttribute('data-outil') === 'tcd' && !T);
+    }
     el.boutonChoisir.textContent = actif ? 'Lecture du fichier…' : 'Choisir mon fichier .txt';
     el.zone.setAttribute('aria-busy', actif ? 'true' : 'false');
   }
@@ -295,7 +310,28 @@
     var excel = document.querySelector('input[name="format"][value="excel"]');
     if (excel) excel.checked = true;
     afficherEtape('choix');
-    if (deplacerFocus) el.boutonChoisir.focus();
+    if (deplacerFocus) (etat.outil ? el.boutonChoisir : el.titreOutil).focus();
+  }
+
+  /* ---- Choix de l'outil ------------------------------------------------ */
+
+  function choisirOutil(outil) {
+    if (outil === 'tcd' && !T) return;
+    reinitialiser(false);
+    etat.outil = outil;
+    el.nomOutil.textContent = NOMS_OUTILS[outil];
+    afficherEtape('choix');
+    el.boutonChoisir.focus();
+    annoncer('Outil choisi' + INSECABLE + ': ' + NOMS_OUTILS[outil] + '.');
+  }
+
+  // Retour à la page d'accueil, sans rien garder du fichier.
+  function changerOutil() {
+    reinitialiser(false);
+    etat.outil = null;
+    el.nomOutil.textContent = '';
+    afficherEtape('outil');
+    el.titreOutil.focus();
   }
 
   /* ---- Lecture du fichier ---------------------------------------------- */
@@ -303,6 +339,10 @@
   function chargerFichier(fichier, plusieurs) {
     reinitialiser(false);
     if (!fichier) return;
+    if (!etat.outil) {
+      afficherErreur('outil', true);
+      return;
+    }
     if (fichier.size > TAILLE_MAX) {
       afficherErreur('trop-gros', true);
       return;
@@ -463,7 +503,7 @@
     var reste = lignes.length - LIGNES_APERCU;
     el.suite.textContent = reste > 0
       ? '… et ' + pluriel(reste, 'autre ligne', 'autres lignes') + (reste > 1 ? ', qui seront' : ', qui sera') +
-        ' aussi dans le fichier CSV.'
+        (etat.outil === 'tcd' ? ' aussi prises en compte dans le tableau croisé.' : ' aussi dans le fichier CSV.')
       : '';
     el.suite.hidden = reste <= 0;
 
@@ -471,6 +511,10 @@
     el.encodage.textContent = (NOMS_ENCODAGES[etat.encodage] || etat.encodage) + (etat.bom ? ', avec BOM' : '');
     el.lignesVides.textContent = nombre(etat.lignesVides);
 
+    el.sectionCsv.hidden = etat.outil !== 'csv';
+    el.sectionTcd.hidden = etat.outil !== 'tcd';
+    // Outil « tableau croisé » : la proposition automatique est faite tout de suite.
+    if (premierAffichage && etat.outil === 'tcd') preparerTcd();
     afficherEtape('resultat');
     mettreAJourAideDefilement();
     if (premierAffichage) {
@@ -585,9 +629,6 @@
     el.suiteTcd.textContent = '';
     el.suiteTcd.hidden = true;
     masquerErreurTcd();
-    el.panneauTcd.hidden = true;
-    el.boutonTcd.hidden = false;
-    el.boutonTcd.setAttribute('aria-expanded', 'false');
   }
 
   function montrerErreurTcd(message) {
@@ -611,16 +652,6 @@
     liste.textContent = '';
     if (texteAucun) ajouterOption(liste, SANS_CHAMP, texteAucun);
     for (var j = 0; j < noms.length; j++) ajouterOption(liste, String(j), noms[j]);
-  }
-
-  function ouvrirTcd() {
-    if (etat.recalculEnAttente) etat.recalculEnAttente();
-    if (!etat.lignes) return;
-    preparerTcd();
-    el.panneauTcd.hidden = false;
-    el.boutonTcd.hidden = true;
-    el.boutonTcd.setAttribute('aria-expanded', 'true');
-    el.resumeTcd.focus();
   }
 
   // Prépare les données et applique la proposition automatique.
@@ -901,6 +932,7 @@
   }
 
   function telechargerTcd() {
+    if (etat.recalculEnAttente) etat.recalculEnAttente(); // un changement de séparateur pas encore appliqué
     if (!etat.tcd) return;
     calculerTcd();
     if (!etat.tcd.enregistrements) {
@@ -926,7 +958,6 @@
       if (el.sectionTcd) el.sectionTcd.hidden = true;
       return;
     }
-    el.boutonTcd.addEventListener('click', clicSimple(ouvrirTcd));
     el.boutonTelechargerTcd.addEventListener('click', clicSimple(telechargerTcd));
     el.tcdEntete.addEventListener('change', function () {
       if (etat.lignes) preparerTcd(el.tcdEntete.checked);
@@ -1063,6 +1094,19 @@
         // Le clavier (detail = 0) n'est jamais concerné.
         if (e.detail === 1 && !el.etapeTermine.hidden && Date.now() - etat.termineA < DELAI_DOUBLE_CLIC) return;
         reinitialiser(true);
+      }));
+    }
+
+    for (i = 0; i < el.cartesOutils.length; i++) {
+      el.cartesOutils[i].addEventListener('click', clicSimple(function (e) {
+        choisirOutil(e.currentTarget.getAttribute('data-outil'));
+      }));
+    }
+    var boutonsChanger = document.querySelectorAll('[data-action="changer-outil"]');
+    for (i = 0; i < boutonsChanger.length; i++) {
+      boutonsChanger[i].addEventListener('click', clicSimple(function (e) {
+        if (e.detail === 1 && !el.etapeTermine.hidden && Date.now() - etat.termineA < DELAI_DOUBLE_CLIC) return;
+        changerOutil();
       }));
     }
 

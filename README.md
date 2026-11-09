@@ -10,15 +10,19 @@ Un petit outil web, gratuit et simple, pour transformer un fichier texte (`.txt`
 
 Beaucoup de logiciels et de sites (banque, mutuelle, carnet d'adresses, inventaire…) permettent d'exporter des données dans un fichier texte (`.txt`). Ouvert tel quel dans Excel, ce fichier s'affiche souvent mal : tout est entassé dans une seule colonne, ou les accents sont remplacés par des signes bizarres (`Ã©` au lieu de `é`).
 
-Cet outil le transforme en fichier `.csv` qu'Excel ouvre proprement : une colonne par information, et des accents corrects.
+La page propose **deux outils**, au choix dès l'accueil :
+
+- **TXT en CSV** : transforme le fichier en `.csv` qu'Excel ouvre proprement, avec une colonne par information et des accents corrects ;
+- **TXT en tableau croisé dynamique** : transforme le fichier en classeur Excel (`.xlsx`) contenant un vrai tableau croisé dynamique (voir [plus bas](#tableau-croisé-dynamique)).
 
 ## Comment l'utiliser
 
 1. Ouvrez [la page de l'outil](https://convertisseur-txt-csv.vercel.app) dans votre navigateur (Edge, Chrome, Firefox ou Safari, sur ordinateur, tablette ou téléphone).
-2. Cliquez sur **Choisir mon fichier .txt** et choisissez votre fichier. Vous pouvez aussi le faire glisser sur la page.
-3. **Vérifiez le tableau** : les 10 premières lignes s'affichent, rangées en colonnes A, B, C… comme dans Excel.
-4. Cliquez sur **Télécharger le fichier CSV**. Le fichier garde le nom de l'original : `releve.txt` devient `releve.csv`.
-5. Pour l'ouvrir dans Excel, cliquez dessus dans la liste des téléchargements du navigateur, ou double-cliquez dessus dans le dossier *Téléchargements*. Sur téléphone ou tablette, il se trouve dans l'application *Fichiers*.
+2. Choisissez l'outil **TXT en CSV**. (Le lien **Changer d'outil** permet de revenir à l'accueil.)
+3. Cliquez sur **Choisir mon fichier .txt** et choisissez votre fichier. Vous pouvez aussi le faire glisser sur la page.
+4. **Vérifiez le tableau** : les 10 premières lignes s'affichent, rangées en colonnes A, B, C… comme dans Excel.
+5. Cliquez sur **Télécharger le fichier CSV**. Le fichier garde le nom de l'original : `releve.txt` devient `releve.csv`.
+6. Pour l'ouvrir dans Excel, cliquez dessus dans la liste des téléchargements du navigateur, ou double-cliquez dessus dans le dossier *Téléchargements*. Sur téléphone ou tablette, il se trouve dans l'application *Fichiers*.
 
 Si vous transformez plusieurs fois le même fichier, le navigateur numérote les nouveaux : `releve (1).csv`, `releve (2).csv`… Prenez le plus récent.
 
@@ -37,10 +41,10 @@ L'outil devine tout seul comment les colonnes sont séparées dans votre fichier
 
 ## Tableau croisé dynamique
 
-Au lieu du fichier CSV, l'outil peut créer un fichier Excel (`.xlsx`) contenant vos données et un **vrai tableau croisé dynamique**, que vous pourrez encore modifier dans Excel (déplacer les champs, changer les calculs, ajouter des segments…).
+Le second outil de la page crée un fichier Excel (`.xlsx`) contenant vos données et un **vrai tableau croisé dynamique**, que vous pourrez encore modifier dans Excel (déplacer les champs, changer les calculs, ajouter des segments…).
 
-1. Après avoir vérifié le tableau, cliquez sur **Créer un tableau croisé dynamique**.
-2. L'outil fait une **proposition automatique** : par exemple la somme des montants par catégorie, avec les mois en colonnes. Les lignes de titre au-dessus du tableau et les lignes de total sont ignorées, pour ne rien compter deux fois.
+1. Sur l'accueil, choisissez l'outil **TXT en tableau croisé dynamique**, puis votre fichier `.txt`.
+2. Vérifiez le tableau de vos données. Juste en dessous, l'outil fait une **proposition automatique** : par exemple la somme des montants par catégorie, avec les mois en colonnes. Les lignes de titre au-dessus du tableau et les lignes de total sont ignorées, pour ne rien compter deux fois.
 3. Modifiez les choix si besoin, l'aperçu se met à jour aussitôt :
    - **Lignes** (avec un second niveau possible) et **Colonnes** ;
    - **Valeurs calculées** : jusqu'à trois, avec somme, nombre, moyenne, minimum ou maximum ;

@@ -5,8 +5,8 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; form-action 'none'; base-uri 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Convertir un fichier .txt en fichier .csv pour Excel</title>
-  <meta name="description" content="Transformez un fichier texte (.txt) en fichier .csv à ouvrir dans Excel. Gratuit et simple : votre fichier reste sur votre ordinateur.">
+  <title>Fichier texte (.txt) en CSV ou en tableau croisé dynamique</title>
+  <meta name="description" content="Transformez un fichier texte (.txt) en fichier .csv pour Excel, ou en tableau croisé dynamique Excel. Gratuit et simple : votre fichier reste sur votre ordinateur.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="style.css">
   <script src="js/conversion.js" defer></script>
@@ -16,7 +16,7 @@
 <body>
   <main class="page">
     <h1>Transformer un fichier texte en fichier Excel</h1>
-    <p class="intro">Choisissez un fichier <strong>.txt</strong>&nbsp;: vous récupérez un fichier <strong>.csv</strong> qui s'ouvre dans Excel, avec une colonne par information, ou un <strong>tableau croisé dynamique</strong> prêt à l'emploi.</p>
+    <p class="intro">Deux outils gratuits pour vos fichiers <strong>.txt</strong>&nbsp;: choisissez celui qui vous convient.</p>
 
     <p class="confidentialite">
       <strong>Votre fichier reste sur votre ordinateur. Rien n'est envoyé ni conservé.</strong>
@@ -31,11 +31,33 @@
       <p id="texte-erreur"></p>
     </div>
 
-    <section id="etape-choix" class="etape" aria-labelledby="titre-choix">
+    <section id="etape-outil" class="etape-outil" aria-labelledby="titre-outil">
+      <h2 id="titre-outil" tabindex="-1">Que voulez-vous faire&nbsp;?</h2>
+      <div class="outils">
+        <button type="button" class="carte-outil" data-outil="csv" disabled>
+          <svg class="icone-outil" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="8" width="36" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 18h36M6 28h36M18 8v32M30 8v32" stroke="currentColor" stroke-width="3"/></svg>
+          <span class="titre-carte">TXT en CSV</span>
+          <span class="detail-carte">Transformer un fichier texte en fichier <strong>.csv</strong> qui s'ouvre dans Excel, avec une colonne par information.</span>
+          <span class="action-carte" aria-hidden="true">Choisir cet outil</span>
+        </button>
+        <button type="button" class="carte-outil" data-outil="tcd" disabled>
+          <svg class="icone-outil" viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="8" width="36" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 18h36M18 8v32" stroke="currentColor" stroke-width="3"/><path d="M24 36V28M30 36V23M36 36V26" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <span class="titre-carte">TXT en tableau croisé dynamique</span>
+          <span class="detail-carte">Transformer un fichier texte en <strong>tableau croisé dynamique</strong> Excel (.xlsx)&nbsp;: totaux, moyennes, pourcentages, filtres, dates regroupées.</span>
+          <span class="action-carte" aria-hidden="true">Choisir cet outil</span>
+        </button>
+      </div>
+      <p id="chargement" class="chargement">Chargement de l'outil… Si les boutons restent gris, rechargez la page.</p>
+    </section>
+
+    <section id="etape-choix" class="etape" aria-labelledby="titre-choix" hidden>
+      <p class="outil-choisi">
+        <span>Outil choisi&nbsp;: <strong id="nom-outil"></strong></span>
+        <button type="button" class="bouton-lien" data-action="changer-outil">Changer d'outil</button>
+      </p>
       <h2 id="titre-choix">1. Choisissez votre fichier</h2>
       <div id="zone-depot" class="zone-depot">
         <button type="button" id="bouton-choisir" class="bouton bouton-principal bouton-grand" disabled>Choisir mon fichier .txt</button>
-        <p id="chargement" class="chargement">Chargement de l'outil… Si le bouton reste gris, rechargez la page.</p>
         <p class="aide-depot">Vous pouvez aussi faire glisser le fichier dans ce cadre.</p>
         <input type="file" id="champ-fichier" class="cache-visuel" accept=".txt,text/plain" tabindex="-1" aria-hidden="true">
       </div>
@@ -81,7 +103,7 @@
         </details>
       </section>
 
-      <section class="etape" aria-labelledby="titre-telechargement">
+      <section id="section-csv" class="etape" aria-labelledby="titre-telechargement">
         <h2 id="titre-telechargement">3. Téléchargez le fichier CSV</h2>
         <fieldset class="choix-format">
           <legend>Pour quel logiciel&nbsp;?</legend>
@@ -106,12 +128,11 @@
         </div>
       </section>
 
-      <section class="etape" aria-labelledby="titre-tcd">
-        <h2 id="titre-tcd">Ou bien&nbsp;: créez un tableau croisé dynamique</h2>
-        <p>Vous obtenez un fichier Excel (.xlsx) avec vos données et un vrai tableau croisé dynamique, que vous pourrez encore modifier dans Excel.</p>
-        <button type="button" id="bouton-tcd" class="bouton bouton-secondaire bouton-grand" aria-expanded="false" aria-controls="panneau-tcd">Créer un tableau croisé dynamique</button>
+      <section id="section-tcd" class="etape" aria-labelledby="titre-tcd">
+        <h2 id="titre-tcd">3. Réglez le tableau croisé dynamique</h2>
+        <p>Vous obtenez un fichier Excel (.xlsx) avec vos données et un vrai tableau croisé dynamique, que vous pourrez encore modifier dans Excel. Une proposition est déjà faite&nbsp;: changez-la si vous le souhaitez.</p>
 
-        <div id="panneau-tcd" class="panneau-tcd" hidden>
+        <div id="panneau-tcd" class="panneau-tcd">
           <p id="resume-tcd" class="resume-tcd" tabindex="-1" translate="no"></p>
           <p id="erreur-tcd" class="message message-erreur" role="alert" hidden></p>
 
@@ -193,6 +214,7 @@
 
           <div class="actions">
             <button type="button" id="bouton-telecharger-tcd" class="bouton bouton-principal bouton-grand">Télécharger le tableau croisé (Excel)</button>
+            <button type="button" class="bouton bouton-secondaire" data-action="recommencer">Recommencer</button>
           </div>
         </div>
       </section>
@@ -207,7 +229,10 @@
       <p class="aide">Si vous aviez déjà transformé ce fichier, le nouveau porte un numéro, par exemple «&nbsp;<span id="nom-numerote" translate="no"></span>&nbsp;». Sur téléphone ou tablette, cherchez-le dans l'application Fichiers.</p>
       <p>Par sécurité, les données ont été effacées de cette page.</p>
       <p class="aide">Le téléchargement n'a pas démarré&nbsp;? Cliquez sur «&nbsp;Recommencer&nbsp;» et choisissez de nouveau votre fichier.</p>
-      <button type="button" class="bouton bouton-principal bouton-grand" data-action="recommencer">Recommencer</button>
+      <div class="actions">
+        <button type="button" class="bouton bouton-principal bouton-grand" data-action="recommencer">Recommencer</button>
+        <button type="button" class="bouton bouton-secondaire" data-action="changer-outil">Choisir un autre outil</button>
+      </div>
     </section>
 
     <p id="annonce" class="cache-visuel" aria-live="polite" translate="no"></p>
